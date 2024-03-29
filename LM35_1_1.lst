@@ -1,0 +1,410 @@
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 1
+
+
+
+
+
+       MCS-51 Family Macro Assembler   A S E M - 5 1   V 1.3
+       =====================================================
+
+
+
+	Source File:	C:\Users\LENOVO\Downloads\Microprocessor Project\LM35_1_1.asm
+	Object File:	C:\Users\LENOVO\Downloads\Microprocessor Project\LM35_1_1.hex
+	List File:	C:\Users\LENOVO\Downloads\Microprocessor Project\LM35_1_1.lst
+
+
+
+ Line  I  Addr  Code            Source
+
+    1:				; DEFINITIONS
+    2:				; EQU (equate): This is used to define a constant
+    3:	  0000			IO_DECLERATION:
+    4:		D      0090	    	LCD_PORT EQU	P1
+    5:		B      00B0	    	RS 	EQU 	P3.0 ; RS ON LCD
+    6:		B      00B1		EN 	EQU 	P3.1 ; EN ON LCD
+    7:
+    8:		B      00B5		ADC_WR	EQU	P3.5
+    9:
+   10:		B      00B4		FAN	EQU	P3.4
+   11:
+   12:		N      00B4		PWM_PIN EQU FAN	;PWM output pin
+   13:		N      0000		PWM_FLAG EQU 0	;Flag to indicate high/low signal
+   14:	  0000	02 00 61		JMP PWM_SETUP
+   15:
+   16:
+   17:
+   18:
+   19:		N      0030		TEMP	EQU	30H
+   20:		N      0031		PSET	EQU	31H
+   21:		N      0032		L_NRML  EQU	32H
+   22:		N      0033		H_NRML	EQU	33H
+   23:
+   24:
+   25:
+   26:		N      0000	    ORG	0		;RESET VECTOR ADDRESS
+   27:	  0000	02 00 30		LJMP	MAIN	;JUMP TO MAIN PROGRAM
+   28:		N      000B	    ORG 0BH			;Vector Address for Timer 0 Interrupts
+   29:	  000B	02 00 6E		JMP TIMER0_ISR
+   30:		N      0030	    ORG	30H
+   31:
+   32:	  0030			MAIN:
+   33:
+   34:	  0030	75 B0 00		MOV 	P3,#00H
+   35:	  0033	75 90 00		MOV 	P1,#00H
+   36:	  0036	75 A0 FF		MOV 	P2,#0FFH
+   37:	  0039	75 80 FF		MOV 	P0,#0FFH
+   38:
+   39:
+   40:	  003C	75 32 1C		MOV	L_NRML,#28D
+   41:	  003F	75 33 23		MOV	H_NRML,#35D
+   42:
+   43:	  0042	12 00 D7		LCALL	LCD_INIT
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 2
+
+
+
+ Line  I  Addr  Code            Source
+
+   44:	  0045	78 80			MOV 	R0, #80H
+   45:	  0047	11 F9			ACALL 	CMND_WRT
+   46:	  0049	90 02 00		MOV	DPTR, #MSG1
+   47:	  004C	11 B6			ACALL	PRNT_STRNG
+   48:
+   49:
+   50:
+   51:	  004E			MAIN_LOOP:
+   52:	  004E	78 8B			MOV 	R0, #08BH
+   53:	  0050	11 F9			ACALL 	CMND_WRT
+   54:
+   55:	  0052	C2 B5			CLR	ADC_WR
+   56:	  0054	D2 B5			SETB	ADC_WR
+   57:	  0056			RD_ADC:
+   58:	  0056	E5 A0			MOV	A,P2
+   59:	  0058	F5 30			MOV	TEMP,A
+   60:	  005A	11 C3			ACALL	BIN_2_ASCII
+   61:	  005C	11 8A			ACALL	CHECK_TEMP
+   62:	  005E	02 00 4E		LJMP	MAIN_LOOP
+   63:
+   64:
+   65:	  0061			PWM_SETUP:
+   66:	  0061	75 89 00		MOV TMOD,#00H
+   67:	  0064	7F 80			MOV R7, #128
+   68:	  0066	D2 AF			SETB EA
+   69:	  0068	D2 A9			SETB ET0
+   70:	  006A	D2 8C			SETB TR0
+   71:	  006C	80 FE			JMP $
+   72:
+   73:
+   74:	  006E			TIMER0_ISR:
+   75:	  006E	20 00 0D		JB PWM_FLAG, LOW_PERIOD
+   76:
+   77:	  0071			HIGH_PERIOD:
+   78:	  0071	D2 00			SETB PWM_FLAG
+   79:	  0073	D2 B4			SETB FAN
+   80:	  0075	74 FF			MOV A, #0FFH
+   81:	  0077	C3			CLR C
+   82:	  0078	9F			SUBB A, R7
+   83:
+   84:	  0079	F5 8C			MOV TH0, A
+   85:	  007B	C2 8D			CLR TF0
+   86:
+   87:	  007D	32			RETI
+   88:
+   89:	  007E			LOW_PERIOD:
+   90:	  007E	C2 00			CLR PWM_FLAG
+   91:	  0080	C2 B4			CLR FAN
+   92:	  0082	8F 8C			MOV TH0, R7
+   93:	  0084	C2 8D			CLR TF0
+   94:
+   95:	  0086	32			RETI
+   96:
+   97:	  0087			PWM_STOP:
+   98:	  0087	C2 8C			CLR TR0
+   99:	  0089	22			RET
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 3
+
+
+
+ Line  I  Addr  Code            Source
+
+  100:
+  101:
+  102:	  008A			CHECK_TEMP:
+  103:
+  104:	  008A	E5 30			MOV	A,TEMP
+  105:	  008C	95 33			SUBB	A,H_NRML
+  106:	  008E	50 06			JNC	_HI
+  107:	  0090	E5 30			MOV	A,TEMP
+  108:	  0092	95 32			SUBB	A,L_NRML
+  109:	  0094	40 03			JC	_LO
+  110:
+  111:	  0096			_HI:
+  112:	  0096	02 00 9C		JMP	TMP_HI
+  113:	  0099			_LO:
+  114:	  0099	02 00 A7		JMP	TMP_LO
+  115:
+  116:
+  117:	  009C			TMP_HI:
+  118:	  009C	D2 B4			SETB	FAN
+  119:	  009E	D2 8E			SETB 	TR1
+  120:	  00A0	90 02 06		MOV	DPTR, #STR_HI
+  121:	  00A3	12 00 B2		LCALL	PRNT_STAT
+  122:	  00A6	22			RET
+  123:
+  124:	  00A7			TMP_LO:
+  125:	  00A7	C2 B4			CLR	FAN
+  126:
+  127:
+  128:	  00A9	D2 8E			SETB 	TR1
+  129:	  00AB	90 02 0D		MOV	DPTR, #STR_LO
+  130:	  00AE	12 00 B2		LCALL	PRNT_STAT
+  131:	  00B1	22			RET
+  132:
+  133:
+  134:	  00B2			PRNT_STAT:
+  135:	  00B2	78 C0			MOV 	R0,#0C0H
+  136:	  00B4	11 F9			ACALL 	CMND_WRT
+  137:	  00B6			PRNT_STRNG:
+  138:	  00B6	E4			CLR	A
+  139:	  00B7	93			MOVC	A, @A+DPTR
+  140:	  00B8	F8			MOV 	R0, A
+  141:	  00B9	60 07			JZ	END_STRNG
+  142:	  00BB	11 EE			ACALL 	DATA_WRT		;call display subroutine
+  143:	  00BD	31 04			ACALL 	DELAY			;give LCD some time
+  144:	  00BF	A3			INC	DPTR
+  145:	  00C0	80 F4			SJMP	PRNT_STRNG
+  146:	  00C2			END_STRNG:
+  147:	  00C2	22			RET
+  148:
+  149:
+  150:	  00C3			BIN_2_ASCII:
+  151:	  00C3	7F 0A			MOV 	R7,#10D
+  152:	  00C5	E5 30			MOV 	A, TEMP		;MOVE VALUE TO ACUMULATOR
+  153:	  00C7	8F F0			MOV 	B,R7
+  154:	  00C9	84			DIV 	AB
+  155:	  00CA	24 30			ADD 	A,#30H		;MOVE VALUE TO ACUMULATOR
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 4
+
+
+
+ Line  I  Addr  Code            Source
+
+  156:	  00CC	F8			MOV 	R0,A
+  157:	  00CD	11 EE			ACALL 	DATA_WRT	;PRINT ON LCD
+  158:	  00CF	E5 F0			MOV 	A,B		;MOVE VALUE TO ACUMULATOR
+  159:	  00D1	24 30			ADD 	A, #30H
+  160:	  00D3	F8			MOV 	R0,A
+  161:	  00D4	11 EE			ACALL 	DATA_WRT	;PRINT ON LCD
+  162:	  00D6	22			RET
+  163:
+  164:
+  165:
+  166:	  00D7			LCD_INIT:
+  167:	  00D7	78 38			MOV 	R0, #38H
+  168:	  00D9	11 F9			ACALL 	CMND_WRT	;call command subroutine
+  169:	  00DB	78 0E			MOV 	R0, #0EH
+  170:	  00DD	11 F9			ACALL 	CMND_WRT
+  171:	  00DF	78 01			MOV 	R0, #01H
+  172:	  00E1	11 F9			ACALL 	CMND_WRT
+  173:						;Increment cursor
+  174:	  00E3	11 F9			ACALL 	CMND_WRT
+  175:	  00E5	78 80			MOV 	R0, #80H
+  176:	  00E7	11 F9			ACALL 	CMND_WRT
+  177:	  00E9	74 3C			MOV 	A,#3CH 		;Activate second line
+  178:	  00EB	11 F9			ACALL 	CMND_WRT
+  179:	  00ED	22			RET
+  180:
+  181:	  00EE			DATA_WRT:
+  182:	  00EE	88 90			MOV 	LCD_PORT, R0
+  183:	  00F0	D2 B0			SETB 	RS
+  184:	  00F2	D2 B1			SETB 	EN
+  185:	  00F4	31 04			ACALL 	DELAY
+  186:	  00F6	C2 B1			CLR 	EN
+  187:	  00F8	22			RET
+  188:
+  189:	  00F9			CMND_WRT:
+  190:	  00F9	88 90			MOV 	LCD_PORT, R0
+  191:	  00FB	C2 B0			CLR 	RS
+  192:	  00FD	D2 B1			SETB 	EN
+  193:	  00FF	31 04			ACALL 	DELAY
+  194:	  0101	C2 B1			CLR 	EN
+  195:	  0103	22			RET
+  196:
+  197:	  0104	75 3E 02	DELAY:	MOV 	62, #2		;APPROX DELAY DE 0.25s
+  198:	  0107	75 3D 32	DELAY1:	MOV 	61, #50
+  199:	  010A	75 3C C8	DELAY_:	MOV 	60, #200
+  200:	  010D	D5 3C FD		DJNZ 	60, $
+  201:	  0110	D5 3D F7		DJNZ 	61, DELAY_
+  202:	  0113	D5 3E F1		DJNZ 	62, DELAY1
+  203:	  0116	22			RET
+  204:
+  205:
+  206:
+  207:		N      0200	ORG 	200H
+  208:	  0200	54 65 6D 70		MSG1: 	DB "Temp:",0
+	  0204	3A 00
+  209:	  0206	48 49 47 48		STR_HI: DB 'HIGH  ',0
+	  020A	20 20 00
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 5
+
+
+
+ Line  I  Addr  Code            Source
+
+  210:	  020D	4C 4F 57 20		STR_LO: DB 'LOW   ',0
+	  0211	20 20 00
+  211:
+  212:					END
+
+
+
+
+
+                     register banks used:  ---
+
+                     no errors
+
+
+
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 6
+
+
+
+
+
+	       L I S T   O F   S Y M B O L S
+	       =============================
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+??ASEM_51			  NUMBER    8051
+??VERSION			  NUMBER    0130
+AC				  BIT	      D6
+ACC				  DATA	      E0
+ADC_WR				  NUMBER    00B5	   8
+B				  DATA	      F0
+BIN_2_ASCII			  CODE	    00C3	 150
+CHECK_TEMP			  CODE	    008A	 102
+CMND_WRT			  CODE	    00F9	 189
+CY				  BIT	      D7
+DATA_WRT			  CODE	    00EE	 181
+DELAY				  CODE	    0104	 197
+DELAY1				  CODE	    0107	 198
+DELAY_				  CODE	    010A	 199
+DPH				  DATA	      83
+DPL				  DATA	      82
+EA				  BIT	      AF
+EN				  NUMBER    00B1	   6
+END_STRNG			  CODE	    00C2	 146
+ES				  BIT	      AC
+ET0				  BIT	      A9
+ET1				  BIT	      AB
+EX0				  BIT	      A8
+EX1				  BIT	      AA
+EXTI0				  CODE	    0003
+EXTI1				  CODE	    0013
+F0				  BIT	      D5
+FAN				  NUMBER    00B4	  10
+HIGH_PERIOD			  CODE	    0071	  77
+H_NRML				  NUMBER    0033	  22
+IE				  DATA	      A8
+IE0				  BIT	      89
+IE1				  BIT	      8B
+INT0				  BIT	      B2
+INT1				  BIT	      B3
+IO_DECLERATION			  CODE	    0000	   3
+IP				  DATA	      B8
+IT0				  BIT	      88
+IT1				  BIT	      8A
+LCD_INIT			  CODE	    00D7	 166
+LCD_PORT			  NUMBER    0090	   4
+LOW_PERIOD			  CODE	    007E	  89
+L_NRML				  NUMBER    0032	  21
+MAIN				  CODE	    0030	  32
+MAIN_LOOP			  CODE	    004E	  51
+MSG1				  CODE	    0200	 208
+OV				  BIT	      D2
+P				  BIT	      D0
+P0				  DATA	      80
+P1				  DATA	      90
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 7
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+P2				  DATA	      A0
+P3				  DATA	      B0
+PCON				  DATA	      87
+PRNT_STAT			  CODE	    00B2	 134
+PRNT_STRNG			  CODE	    00B6	 137
+PS				  BIT	      BC
+PSET				  NUMBER    0031	  20
+PSW				  DATA	      D0
+PT0				  BIT	      B9
+PT1				  BIT	      BB
+PWM_FLAG			  NUMBER    0000	  13
+PWM_PIN				  NUMBER    00B4	  12
+PWM_SETUP			  CODE	    0061	  65
+PWM_STOP			  CODE	    0087	  97
+PX0				  BIT	      B8
+PX1				  BIT	      BA
+RB8				  BIT	      9A
+RD				  BIT	      B7
+RD_ADC				  CODE	    0056	  57
+REN				  BIT	      9C
+RESET				  CODE	    0000
+RI				  BIT	      98
+RS				  NUMBER    00B0	   5
+RS0				  BIT	      D3
+RS1				  BIT	      D4
+RXD				  BIT	      B0
+SBUF				  DATA	      99
+SCON				  DATA	      98
+SINT				  CODE	    0023
+SM0				  BIT	      9F
+SM1				  BIT	      9E
+SM2				  BIT	      9D
+SP				  DATA	      81
+STR_HI				  CODE	    0206	 209
+STR_LO				  CODE	    020D	 210
+T0				  BIT	      B4
+T1				  BIT	      B5
+TB8				  BIT	      9B
+TCON				  DATA	      88
+TEMP				  NUMBER    0030	  19
+TF0				  BIT	      8D
+TF1				  BIT	      8F
+TH0				  DATA	      8C
+TH1				  DATA	      8D
+TI				  BIT	      99
+TIMER0				  CODE	    000B
+TIMER0_ISR			  CODE	    006E	  74
+TIMER1				  CODE	    001B
+TL0				  DATA	      8A
+TL1				  DATA	      8B
+TMOD				  DATA	      89
+TMP_HI				  CODE	    009C	 117
+TMP_LO				  CODE	    00A7	 124
+TR0				  BIT	      8C
+TR1				  BIT	      8E
+TXD				  BIT	      B1
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 8
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+WR				  BIT	      B6
+_HI				  CODE	    0096	 111
+_LO				  CODE	    0099	 113
